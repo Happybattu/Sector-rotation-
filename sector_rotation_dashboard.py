@@ -25,6 +25,7 @@ Methodology:
          - IMPROVING  (RS<100, Mom>100)  -> weak tha par turn kar raha -
                                               early entry zone
 """
+
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -279,10 +280,13 @@ if not rs_ratio_df.empty:
         c = QUADRANT_COLOR.get(val, "#fff")
         return f"background-color: {c}33; color: {c}; font-weight: bold"
 
-    st.dataframe(
-        quad_df.style.applymap(color_zone, subset=["Zone"]),
-        use_container_width=True, hide_index=True
-    )
+    styler = quad_df.style
+    try:
+        styler = styler.map(color_zone, subset=["Zone"])  # pandas >= 2.1
+    except AttributeError:
+        styler = styler.applymap(color_zone, subset=["Zone"])  # older pandas
+
+    st.dataframe(styler, use_container_width=True, hide_index=True)
 
     leading = quad_df[quad_df["Zone"] == "Leading"]["Sector"].tolist()
     improving = quad_df[quad_df["Zone"] == "Improving"]["Sector"].tolist()
@@ -313,4 +317,5 @@ st.caption(
     "⚠️ Yeh tool sirf price-based relative strength dikhata hai. FII/DII "
     "cash + F&O flow, sector earnings, aur macro triggers (rate cuts, crude, "
     "budget) ke saath cross-check karke hi decision lo. Investment advice nahi hai."
-)
+                     )
+        
