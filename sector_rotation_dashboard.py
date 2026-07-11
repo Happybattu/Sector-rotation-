@@ -25,7 +25,6 @@ Methodology:
          - IMPROVING  (RS<100, Mom>100)  -> weak tha par turn kar raha -
                                               early entry zone
 """
-
 import streamlit as st
 import yfinance as yf
 import pandas as pd
