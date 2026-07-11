@@ -2,3 +2,5 @@ streamlit
 feedparser
 yfinance
 pandas
+numpy 
+plotly
