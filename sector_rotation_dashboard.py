@@ -77,16 +77,40 @@ def fetch_prices(tickers: dict, benchmark: str, period="1y"):
         try:
             hist = yf.download(tk, period=period, interval="1d",
                                 progress=False, auto_adjust=True)
-            if hist.empty or "Close" not in hist:
+            if hist is None or hist.empty:
                 failed.append(name)
                 continue
-            data[name] = hist["Close"]
+
+            # yfinance sometimes returns MultiIndex columns even for a
+            # single ticker (e.g. ('Close', 'TICKER')). Normalize to a
+            # plain 1-D Series in every case.
+            if isinstance(hist.columns, pd.MultiIndex):
+                if "Close" not in hist.columns.get_level_values(0):
+                    failed.append(name)
+                    continue
+                close = hist["Close"]
+                if isinstance(close, pd.DataFrame):
+                    close = close.iloc[:, 0]
+            else:
+                if "Close" not in hist.columns:
+                    failed.append(name)
+                    continue
+                close = hist["Close"]
+
+            close = pd.Series(close).astype(float).dropna()
+            if close.empty:
+                failed.append(name)
+                continue
+            data[name] = close
         except Exception:
             failed.append(name)
+
     if not data:
         return None, failed
-    df = pd.DataFrame(data).dropna(how="all")
-    df = df.ffill().dropna()
+
+    df = pd.concat(data, axis=1)
+    df.columns = list(data.keys())
+    df = df.ffill().dropna(how="all")
     return df, failed
 
 
